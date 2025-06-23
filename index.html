@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SPA Accesible</title>
+  <link rel="stylesheet" href="estilos.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoZbN6LfXW8UanpZ0I1vWzWjU4E+M9zWfQ51uWYvI4Vxk0x" crossorigin="anonymous"></script>
+</head>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const popup        = document.getElementById("popup-accesibilidad");
+  let popupActivo    = true;
+  let modoAccesible  = false;
+  let secciones      = [];
+  let idxSeccion     = 0;
+
+  // Para titulares
+  let titulares      = [];
+  let idxTitular     = 0;
+
+  function leer(texto) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = "es-ES";
+    speechSynthesis.speak(u);
+  }
+
+  // 1) Mensaje inicial
+  leer("¿Presenta discapacidad visual? Presione barra espaciadora para sí, o F para no.");
+
+  document.addEventListener("keydown", e => {
+    const key = e.key.toLowerCase();
+
+    // — RESPUESTA AL POPUP —
+    if (popupActivo) {
+      if (e.code === "Space" || key === "f") {
+        popup.remove();
+        popupActivo = false;
+        if (e.code === "Space") activarAccesibilidad();
+        else leer("Bienvenido. Puede navegar normalmente con ratón o teclado.");
+      }
+      return;
+    }
+
+    // — FUERA DE MODO ACCESIBLE NO HACEMOS NADA —
+    if (!modoAccesible) return;
+
+    // — ATALLOS EN MODO ACCESIBLE —
+    switch (true) {
+      case (e.code === "Space"):
+        e.preventDefault();
+        moverSeccion(1);
+        break;
+      case (key === "a"):
+        leerSeccionCompleta();
+        break;
+      case (key === "s"):
+        avanzarTitular();
+        break;
+      case (key === "f"):
+        leerInstrucciones();
+        break;
+    }
+  });
+
+  function activarAccesibilidad() {
+    modoAccesible = true;
+    document.body.classList.add("modo-noche","fuente-grande","alto-contraste");
+    secciones   = Array.from(document.querySelectorAll(".seccion"));
+    idxSeccion  = 0;
+    enfocarSeccion(idxSeccion);
+  }
+
+  function moverSeccion(dir) {
+    idxSeccion = (idxSeccion + dir + secciones.length) % secciones.length;
+    enfocarSeccion(idxSeccion);
+  }
+
+  function enfocarSeccion(i) {
+    const sec = secciones[i];
+    const tituloSec = sec.querySelector("h2")?.innerText || "sin título";
+
+    // — 1) Actualiza clases & menú —
+    secciones.forEach(s => s.classList.remove("visible","seccion-activa"));
+    sec.classList.add("visible","seccion-activa");
+    sec.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    document.querySelectorAll(".menu a")
+      .forEach(a => a.classList.remove("activo"));
+    const enlace = document.querySelector(`.menu a[href="#${sec.id}"]`);
+    if (enlace) enlace.classList.add("activo");
+
+    // — 2) Prepara titulares de la sección —
+    titulares = Array.from(sec.querySelectorAll("h3"));
+    idxTitular = -1;  // aún no hemos leído ninguno
+
+    // — 3) Genera y lee instrucciones —
+    const instr = 
+      `Sección de ${tituloSec}. ` +
+      `Presione A para leer toda la sección. ` +
+      `Presione S para navegar por titulares. ` +
+      `Presione F para repetir estas instrucciones.`;
+    // guardamos para la tecla F
+    sec.dataset.instruccion = instr;
+    leer(instr);
+  }
+
+  function leerInstrucciones() {
+    const sec = secciones[idxSeccion];
+    leer(sec.dataset.instruccion);
+  }
+
+  function leerSeccionCompleta() {
+    const sec = secciones[idxSeccion];
+    const titulo = sec.querySelector("h2")?.innerText || "";
+    const parrafos = Array.from(sec.querySelectorAll("p"))
+                          .map(p => p.innerText).join(". ");
+    leer(`${titulo}. ${parrafos}`);
+  }
+
+  function avanzarTitular() {
+    if (!titulares.length) {
+      leer("No hay titulares en esta sección.");
+      return;
+    }
+    idxTitular = (idxTitular + 1) % titulares.length;
+    leer(titulares[idxTitular].innerText);
+  }
+
+  // — LOGICA DE CLICK EN MENÚ (intacta) —
+  document.querySelectorAll(".menu a")
+    .forEach(a => a.addEventListener("click", e => {
+      e.preventDefault();
+      document.querySelectorAll(".menu a")
+        .forEach(x => x.classList.remove("activo"));
+      a.classList.add("activo");
+      document.querySelectorAll(".seccion")
+        .forEach(sec => sec.classList.remove("visible"));
+      const dest = document.getElementById(a.getAttribute("href").slice(1));
+      if (dest) dest.classList.add("visible");
+    }));
+});
+</script>
+
+<body class="container my-4">
+<div id="popup-accesibilidad" class="popup">
+  <div class="popup-contenido" role="dialog" aria-live="assertive" aria-label="Pregunta de accesibilidad">
+    <p>¿Presenta discapacidad visual? Presione barra espaciadora para decir sí, o F para no.</p>
+  </div>
+</div>
+<!-- Controles de accesibilidad -->
+<section aria-label="Controles de accesibilidad" style="margin: 1rem 0;">
+  <input type="text" id="voiceSearch" placeholder="Buscar por voz..." aria-label="Buscar por voz">
+  <button onclick="startVoiceSearch()">🎤 Buscar por voz</button>
+</section>
+
+  <header>
+    <nav>
+      <ul class="menu">
+        <li><a href="#inicio" class="activo">INICIO</a></li>
+        <li><a href="#nacional">NACIONAL</a></li>
+        <li><a href="#internacional">INTERNACIONAL</a></li>
+        <li><a href="#vida">VIDA COTIDIANA</a></li>
+        <li><a href="#contacto">CONTÁCTANOS</a></li>
+      </ul>
+    </nav>
+  </header>
+		<section class="hero">
+			<h1>Voz informativa</h1>
+			<p>En este espacio, la información es accesible para todos c:</p>
+
+      
+  <main>
+    <section id="inicio" class="seccion visible">
+      <h2>Inicio</h2>
+      <p>Bienvenido a Voz Informativa.</p>
+    </section>
+    <section id="nacional" class="seccion">
+      <h2>Nacional</h2>
+      <p>Noticias nacionales aquí.</p>
+  
+    <h3>La franja de gaza va a caer</h3>
+    
+    </section>
+    <section id="internacional" class="seccion">
+      <h2>Internacional</h2>
+      <p>Noticias internacionales aquí.</p>
+    </section>
+    <section id="vida" class="seccion">
+      <h2>Vida Cotidiana</h2>
+      <p>Consejos para la vida diaria.</p>
+    </section>
+    <section id="contacto" class="seccion">
+      <h2>Contáctanos</h2>
+      <p>Formulario de contacto o información.</p>
+      <h1>SOBRE NOSOTROS</h1>
+				<p>
+					Nuestro equipo busca generar conciencia sobre la importancia del
+					diseño universal y aspira a que este proyecto sirva como un referente
+					para futuras iniciativas de accesibilidad. En última instancia, la
+					meta no es solo brindar acceso a la información, sino empoderar a las
+					personas con discapacidad visual para que naveguen con autonomía,
+					participen activamente en la sociedad digital y tengan las mismas
+					oportunidades de aprendizaje, expresión y desarrollo que cualquier
+					otro usuario.
+				</p>
+				<p style="margin-top: 1rem">
+					Nuestro objetivo principal también es construir una plataforma que no
+					solo cumpla con los estándares internacionales de accesibilidad, como
+					las Pautas de Accesibilidad al Contenido Web (WCAG), sino que además
+					brinde una experiencia de usuario rica, fluida y adaptada a las
+					necesidades reales del público objetivo. Para lograr esto, se están
+					implementando funcionalidades clave como navegación por teclado,
+					comandos de voz, lectura en voz alta con ajuste de velocidad,
+					compatibilidad con lectores de pantalla como NVDA y JAWS, y una
+					interfaz basada en etiquetas semánticas HTML que facilita la
+					comprensión estructural del contenido.
+				</p>
+    </section>
+  </main>
+  <footer>
+			<div>
+				<span class="logo">Voz Informativa</span>
+			</div>
+			<div>REDES SOCIALES</div>
+			<div class="social-icons">
+				<a href="https://facebook.com" class="social-icon">
+					<img
+						src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg"
+						alt="Facebook"
+						width="24"
+						height="24"
+					/>
+				</a>
+				<a href="https://linkedin.com" class="social-icon">
+					<img
+						src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg"
+						alt="LinkedIn"
+						width="24"
+						height="24"
+					/>
+				</a>
+				<a href="https://youtube.com" class="social-icon">
+					<img
+						src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg"
+						alt="YouTube"
+						width="24"
+						height="24"
+					/>
+				</a>
+				<a href="https://instagram.com" class="social-icon">
+					<img
+						src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg"
+						alt="Instagram"
+						width="24"
+						height="24"
+					/>
+				</a>
+			</div>
+			<div class="footer-logo">
+				<div>GRUPO DE DIARIOS AMÉRICA</div>
+			</div>
+			<div>
+				<div>LIBRO DE RECLAMACIONES</div>
+			</div>
+		</footer>
+		
+	<!--script src="accesibilidad_navegacion.js"></script-->
+	<script src="accesibilidad_navegacion_teclas_a_d.js"></script>
+
+	
+</body>
+</html>
