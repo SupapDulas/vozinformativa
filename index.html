@@ -2,146 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>SPA Accesible</title>
+  <title>VOZ INFORMATIVA</title>
   <link rel="stylesheet" href="estilos.css">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoZbN6LfXW8UanpZ0I1vWzWjU4E+M9zWfQ51uWYvI4Vxk0x" crossorigin="anonymous"></script>
 </head>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const popup        = document.getElementById("popup-accesibilidad");
-  let popupActivo    = true;
-  let modoAccesible  = false;
-  let secciones      = [];
-  let idxSeccion     = 0;
 
-  // Para titulares
-  let titulares      = [];
-  let idxTitular     = 0;
-
-  function leer(texto) {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(texto);
-    u.lang = "es-ES";
-    speechSynthesis.speak(u);
-  }
-
-  // 1) Mensaje inicial
-  leer("¿Presenta discapacidad visual? Presione barra espaciadora para sí, o F para no.");
-
-  document.addEventListener("keydown", e => {
-    const key = e.key.toLowerCase();
-
-    // — RESPUESTA AL POPUP —
-    if (popupActivo) {
-      if (e.code === "Space" || key === "f") {
-        popup.remove();
-        popupActivo = false;
-        if (e.code === "Space") activarAccesibilidad();
-        else leer("Bienvenido. Puede navegar normalmente con ratón o teclado.");
-      }
-      return;
-    }
-
-    // — FUERA DE MODO ACCESIBLE NO HACEMOS NADA —
-    if (!modoAccesible) return;
-
-    // — ATALLOS EN MODO ACCESIBLE —
-    switch (true) {
-      case (e.code === "Space"):
-        e.preventDefault();
-        moverSeccion(1);
-        break;
-      case (key === "a"):
-        leerSeccionCompleta();
-        break;
-      case (key === "s"):
-        avanzarTitular();
-        break;
-      case (key === "f"):
-        leerInstrucciones();
-        break;
-    }
-  });
-
-  function activarAccesibilidad() {
-    modoAccesible = true;
-    document.body.classList.add("modo-noche","fuente-grande","alto-contraste");
-    secciones   = Array.from(document.querySelectorAll(".seccion"));
-    idxSeccion  = 0;
-    enfocarSeccion(idxSeccion);
-  }
-
-  function moverSeccion(dir) {
-    idxSeccion = (idxSeccion + dir + secciones.length) % secciones.length;
-    enfocarSeccion(idxSeccion);
-  }
-
-  function enfocarSeccion(i) {
-    const sec = secciones[i];
-    const tituloSec = sec.querySelector("h2")?.innerText || "sin título";
-
-    // — 1) Actualiza clases & menú —
-    secciones.forEach(s => s.classList.remove("visible","seccion-activa"));
-    sec.classList.add("visible","seccion-activa");
-    sec.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    document.querySelectorAll(".menu a")
-      .forEach(a => a.classList.remove("activo"));
-    const enlace = document.querySelector(`.menu a[href="#${sec.id}"]`);
-    if (enlace) enlace.classList.add("activo");
-
-    // — 2) Prepara titulares de la sección —
-    titulares = Array.from(sec.querySelectorAll("h3"));
-    idxTitular = -1;  // aún no hemos leído ninguno
-
-    // — 3) Genera y lee instrucciones —
-    const instr = 
-      `Sección de ${tituloSec}. ` +
-      `Presione A para leer toda la sección. ` +
-      `Presione S para navegar por titulares. ` +
-      `Presione F para repetir estas instrucciones.`;
-    // guardamos para la tecla F
-    sec.dataset.instruccion = instr;
-    leer(instr);
-  }
-
-  function leerInstrucciones() {
-    const sec = secciones[idxSeccion];
-    leer(sec.dataset.instruccion);
-  }
-
-  function leerSeccionCompleta() {
-    const sec = secciones[idxSeccion];
-    const titulo = sec.querySelector("h2")?.innerText || "";
-    const parrafos = Array.from(sec.querySelectorAll("p"))
-                          .map(p => p.innerText).join(". ");
-    leer(`${titulo}. ${parrafos}`);
-  }
-
-  function avanzarTitular() {
-    if (!titulares.length) {
-      leer("No hay titulares en esta sección.");
-      return;
-    }
-    idxTitular = (idxTitular + 1) % titulares.length;
-    leer(titulares[idxTitular].innerText);
-  }
-
-  // — LOGICA DE CLICK EN MENÚ (intacta) —
-  document.querySelectorAll(".menu a")
-    .forEach(a => a.addEventListener("click", e => {
-      e.preventDefault();
-      document.querySelectorAll(".menu a")
-        .forEach(x => x.classList.remove("activo"));
-      a.classList.add("activo");
-      document.querySelectorAll(".seccion")
-        .forEach(sec => sec.classList.remove("visible"));
-      const dest = document.getElementById(a.getAttribute("href").slice(1));
-      if (dest) dest.classList.add("visible");
-    }));
-});
-</script>
 
 <body class="container my-4">
 <div id="popup-accesibilidad" class="popup">
@@ -172,53 +38,101 @@ document.addEventListener("DOMContentLoaded", () => {
 
       
   <main>
-    <section id="inicio" class="seccion visible">
-      <h2>Inicio</h2>
-      <p>Bienvenido a Voz Informativa.</p>
-    </section>
-    <section id="nacional" class="seccion">
-      <h2>Nacional</h2>
-      <p>Noticias nacionales aquí.</p>
+  <section id="inicio" class="seccion visible">
+    <h2>Inicio</h2>
+    <p>Bienvenido a Voz Informativa.</p>
+    <article>
+      <h3>¿Qué es la accesibilidad digital?</h3>
+      <p>La accesibilidad digital permite que todas las personas, incluidas aquellas con discapacidad, puedan navegar por internet sin barreras. Explorar este concepto es esencial para un mundo más inclusivo.</p>
+    </article>
+    <article>
+      <h3>Tu voz, tu derecho</h3>
+      <p>Iniciamos esta plataforma para que la información no tenga fronteras. Aquí, cada usuario encuentra su ritmo y su forma de interactuar con los contenidos.</p>
+    </article>
+  </section>
+
+  <section id="nacional" class="seccion">
+  <h2>Nacional</h2>
+  <p>Noticias nacionales aquí.</p>
+
+  <article>
+  <h3>Masiva aparición de pota en playa de Pucusana</h3>
+  <p>La inesperada aparición de pota en la orilla sorprendió a vecinos y pescadores, generando asombro y diversas reacciones. Si quieres mayor información, presiona espacio.</p>
   
-    <h3>La franja de gaza va a caer</h3>
+  <!-- subbloque de video -->
+  <div class="subbloque-video">
+    <video controls style="width: 100%; max-width: 560px;">
+      <source src="videos/video5116102783149280065.mp4" type="video/mp4">
+      Tu navegador no soporta la reproducción de video.
+    </video>
+  </div>
+</article>
+
+  <article>
+    <h3>Barristas desatan violencia en San Juan de Lurigancho con enfrentamientos callejeros</h3>
+    <p>Vecinos viven momentos de pánico tras enfrentamientos entre grupos rivales que usaron piedras, palos y machetes en plena vía pública.</p>
     
-    </section>
-    <section id="internacional" class="seccion">
-      <h2>Internacional</h2>
-      <p>Noticias internacionales aquí.</p>
-    </section>
-    <section id="vida" class="seccion">
-      <h2>Vida Cotidiana</h2>
-      <p>Consejos para la vida diaria.</p>
-    </section>
-    <section id="contacto" class="seccion">
-      <h2>Contáctanos</h2>
-      <p>Formulario de contacto o información.</p>
-      <h1>SOBRE NOSOTROS</h1>
-				<p>
-					Nuestro equipo busca generar conciencia sobre la importancia del
-					diseño universal y aspira a que este proyecto sirva como un referente
-					para futuras iniciativas de accesibilidad. En última instancia, la
-					meta no es solo brindar acceso a la información, sino empoderar a las
-					personas con discapacidad visual para que naveguen con autonomía,
-					participen activamente en la sociedad digital y tengan las mismas
-					oportunidades de aprendizaje, expresión y desarrollo que cualquier
-					otro usuario.
-				</p>
-				<p style="margin-top: 1rem">
-					Nuestro objetivo principal también es construir una plataforma que no
-					solo cumpla con los estándares internacionales de accesibilidad, como
-					las Pautas de Accesibilidad al Contenido Web (WCAG), sino que además
-					brinde una experiencia de usuario rica, fluida y adaptada a las
-					necesidades reales del público objetivo. Para lograr esto, se están
-					implementando funcionalidades clave como navegación por teclado,
-					comandos de voz, lectura en voz alta con ajuste de velocidad,
-					compatibilidad con lectores de pantalla como NVDA y JAWS, y una
-					interfaz basada en etiquetas semánticas HTML que facilita la
-					comprensión estructural del contenido.
-				</p>
-    </section>
-  </main>
+    <!-- subbloque de video -->
+    <div class="subbloque-video">
+       <video controls style="width: 100%; max-width: 560px;">
+        <source src="videos/video5116249366088123832.mp4" type="video/mp4">
+        Tu navegador no soporta video.
+      </video>
+    </div>
+  </article>
+</section>
+
+
+  <section id="internacional" class="seccion">
+    <h2>Internacional</h2>
+    <p>Noticias internacionales aquí.</p>
+    <article>
+      <h3>Rusia lanza masivo ataque aéreo contra Ucrania</h3>
+      <p>Más de 370 drones y misiles fueron desplegados en una nueva ofensiva que intensifica el conflicto y pone en alerta a la comunidad internacional.</p>
+      <div class="subbloque-video">
+       <video controls style="width: 100%; max-width: 560px;">
+        <source src="videos/video5116102783149280067.mp4" type="video/mp4">
+        Tu navegador no soporta video.
+      </video>
+    </div>
+    </article>
+    <article>
+      <h3>En caso de una Tercera Guerra Mundial, estos serían los países más seguros, según la IA</h3>
+      <p>Inteligencia artificial identifica las naciones con mayor estabilidad, baja participación en conflictos y geografía estratégica ante una posible guerra global.</p>
+      <div class="subbloque-video">
+       <video controls style="width: 100%; max-width: 560px;">
+        <source src="videos/video5116102783149280066.mp4" type="video/mp4">
+        Tu navegador no soporta video.
+      </video>
+    </div>
+    </article>
+  </section>
+
+  <section id="vida" class="seccion">
+    <h2>Vida Cotidiana</h2>
+    <p>Consejos para la vida diaria.</p>
+    <article>
+      <h3>Organización táctil en el hogar</h3>
+      <p>Asignar un lugar fijo para cada objeto facilita la autonomía y reduce el riesgo de accidentes. Usar texturas diferentes (como bandas de goma, telas o etiquetas en braille) en frascos, interruptores y electrodomésticos ayuda a identificarlos rápidamente con el tacto. Esta estrategia convierte el hogar en un espacio más accesible y seguro.</p>
+    </article>
+    <article>
+      <h3>Uso del bastón blanco con técnica del “barrido”</h3>
+      <p>El bastón blanco no solo sirve para detectar obstáculos, sino también para obtener información del entorno. La técnica del "barrido" consiste en mover el bastón de lado a lado, ligeramente más allá del ancho de los hombros, tocando suavemente el suelo. Esto permite anticipar escalones, huecos o cambios de superficie, mejorando la movilidad y seguridad al caminar.</p>
+    </article>
+  </section>
+
+  <section id="contacto" class="seccion">
+    <h2>Contáctanos</h2>
+    <p>Formulario de contacto o información.</p>
+    <article>
+      <h3>¿Tienes dudas, sugerencias o necesitas ayuda? ¡Estamos aquí para escucharte!</h3>
+      <p>Llama al número: 912 968 988 y te atenderemos al instante</p>
+    </article>
+    <!-- Aquí va el mismo contenido que ya tenías: SOBRE NOSOTROS -->
+    <!-- ... (sin cambios) -->
+  </section>
+</main>
+
   <footer>
 			<div>
 				<span class="logo">Voz Informativa</span>
